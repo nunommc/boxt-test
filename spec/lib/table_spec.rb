@@ -7,7 +7,7 @@ RSpec.describe Table do
     expect(table.valid_position?(0, 0)).to be true
     expect(table.valid_position?(4, 4)).to be true
     expect(table.valid_position?(5, 5)).to be false
-    expect(table.valid_position?(-1, -1)).to be false
+    expect(table.valid_position?(-1, 0)).to be false
   end
 end
 

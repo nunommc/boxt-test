@@ -2,51 +2,77 @@ require 'robot'
 require 'table'
 
 class Simulator
-  attr_reader :table, :robot
-
-  def initialize(table: Table.new, robot: Robot.new)
+  def initialize(table: Table.new(5, 5), robots: [])
     @table = table
-    @robot = robot
+    @robots = robots
+
+    add_robot if @robots.empty?
   end
 
-  def execute(command)
-    parts = command.split
-    case parts[0]
-    when "PLACE"
-      handle_place(parts[1])
+  def add_robot
+    robot = Robot.new
+    @robots << { robot: robot, position: nil }
+    robot
+  end
+
+  def execute(command, robot: @robots.first.dig(:robot))
+    case command
+    when /^PLACE (\d+),(\d+),(NORTH|SOUTH|EAST|WEST)$/
+      x, y, direction = $1.to_i, $2.to_i, $3
+      place_robot(robot, x, y, direction)
     when "MOVE"
-      handle_move
+      move_robot(robot)
     when "LEFT"
-      @robot.turn_left
+      robot.turn_left
     when "RIGHT"
-      @robot.turn_right
+      robot.turn_right
     when "REPORT"
-      @robot.report
-    else
-      nil
+      report_robot(robot)
     end
   end
 
   private
 
-  def handle_place(args)
-    x, y, direction = args.split(",")
-    x, y = x.to_i, y.to_i
-    @robot.place(x, y, direction) if @table.valid_position?(x, y)
+  def place_robot(robot, x, y, direction)
+    return unless @table.valid_position?(x, y)
+
+    entry = @robots.find { |r| r[:robot] == robot }
+    entry[:position] = { x: x, y: y }
+    robot.place(direction)
   end
 
-  def handle_move
-    return unless @robot.placed?
+  def move_robot(robot)
+    return unless robot.placed?
 
-    x, y = @robot.x, @robot.y
-    case @robot.direction
-    when "NORTH" then y += 1
-    when "EAST" then x += 1
-    when "SOUTH" then y -= 1
-    when "WEST" then x -= 1
+    entry = @robots.find { |r| r[:robot] == robot }
+    current_position = entry[:position]
+
+    new_position = calculate_new_position(current_position, robot.direction)
+    return unless @table.valid_position?(new_position[:x], new_position[:y])
+    return if position_occupied?(new_position[:x], new_position[:y])
+
+    entry[:position] = new_position
+  end
+
+  def calculate_new_position(position, direction)
+    x, y = position[:x], position[:y]
+    case direction
+    when "NORTH" then { x: x, y: y + 1 }
+    when "EAST" then { x: x + 1, y: y }
+    when "SOUTH" then { x: x, y: y - 1 }
+    when "WEST" then { x: x - 1, y: y }
     end
+  end
 
-    @robot.move if @table.valid_position?(x, y)
+  def position_occupied?(x, y)
+    @robots.any? { |r| r[:position] == { x: x, y: y } }
+  end
+
+  def report_robot(robot)
+    return unless robot.placed?
+
+    entry = @robots.find { |r| r[:robot] == robot }
+    position = entry[:position]
+    "#{position[:x]},#{position[:y]},#{robot.direction}"
   end
 end
-

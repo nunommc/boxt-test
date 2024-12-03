@@ -2,8 +2,7 @@ require 'simulator'
 
 RSpec.describe Simulator do
   let(:table) { Table.new(width: 5, height: 5) }
-  let(:robot) { Robot.new }
-  let(:simulator) { Simulator.new(table: table, robot: robot) }
+  let(:simulator) { Simulator.new(table: table) }
 
   it "executes PLACE and REPORT commands" do
     simulator.execute("PLACE 0,0,NORTH")
