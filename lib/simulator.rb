@@ -1,8 +1,8 @@
-require 'robot'
-require 'table'
+require_relative 'robot'
+require_relative 'table'
 
 class Simulator
-  def initialize(table: Table.new(5, 5), robots: [])
+  def initialize(table: Table.new, robots: [])
     @table = table
     @robots = robots
 
@@ -16,19 +16,26 @@ class Simulator
   end
 
   def execute(command, robot: @robots.first.dig(:robot))
-    case command
+    case command.upcase
     when /^PLACE (\d+),(\d+),(NORTH|SOUTH|EAST|WEST)$/
       x, y, direction = $1.to_i, $2.to_i, $3
       place_robot(robot, x, y, direction)
+      nil
     when "MOVE"
-      move_robot(robot)
+      move_robot(robot) ; nil
     when "LEFT"
-      robot.turn_left
+      robot.turn_left ; nil
     when "RIGHT"
-      robot.turn_right
+      robot.turn_right ; nil
     when "REPORT"
       report_robot(robot)
+    else
+      puts "Unhandled command: `#{command}`"
     end
+  end
+
+  def help
+    puts "Enter commands (PLACE X,Y,F | MOVE | LEFT | RIGHT | REPORT) or type 'QUIT' to exit."
   end
 
   private
